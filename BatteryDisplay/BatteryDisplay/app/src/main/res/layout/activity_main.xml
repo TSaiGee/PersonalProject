@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    tools:context=".MainActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="300dp"
+        android:layout_gravity="bottom"
+        android:layout_marginTop="200dp"
+        android:layout_weight="1"
+        android:paddingStart="20dp"
+        android:paddingEnd="15dp"
+        android:paddingBottom="15dp">
+
+        <TextView
+            android:id="@+id/wifi_state"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="160dp"
+            android:alpha="0.5"
+            android:background="@drawable/icon_state_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/internet_state" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/wifi_state_icon"
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/wifi_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="@+id/wifi_state"
+            app:layout_constraintEnd_toEndOf="@+id/wifi_state"
+            app:layout_constraintStart_toStartOf="@+id/wifi_state"
+            app:layout_constraintTop_toTopOf="@+id/wifi_state" />
+
+
+        <TextView
+            android:id="@+id/internet_state"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:alpha="0.5"
+            android:background="@drawable/icon_state_default"
+            app:layout_constraintBottom_toBottomOf="@+id/wifi_state"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/internet_state_icon"
+            android:layout_width="30dp"
+            android:layout_height="26dp"
+            android:background="@drawable/internet_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="@+id/internet_state"
+            app:layout_constraintEnd_toEndOf="@+id/internet_state"
+            app:layout_constraintStart_toStartOf="@+id/internet_state"
+            app:layout_constraintTop_toTopOf="@+id/internet_state" />
+
+
+        <TextView
+            android:id="@+id/bluetooth_state"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:alpha="0.5"
+            android:background="@drawable/icon_state_default"
+            app:layout_constraintEnd_toStartOf="@+id/mute_state"
+            app:layout_constraintTop_toBottomOf="@id/wifi_state" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/bluetooth_state_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/bluetooth_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="@+id/bluetooth_state"
+            app:layout_constraintEnd_toEndOf="@+id/bluetooth_state"
+            app:layout_constraintStart_toStartOf="@+id/bluetooth_state"
+            app:layout_constraintTop_toTopOf="@+id/bluetooth_state" />
+
+        <TextView
+            android:id="@+id/mute_state"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:alpha="0.5"
+            android:background="@drawable/icon_state_default"
+            app:layout_constraintBottom_toBottomOf="@+id/bluetooth_state"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/mute_state_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/mute_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="@+id/mute_state"
+            app:layout_constraintEnd_toEndOf="@+id/mute_state"
+            app:layout_constraintStart_toStartOf="@+id/mute_state"
+            app:layout_constraintTop_toTopOf="@+id/mute_state" />
+
+        <TextView
+            android:id="@+id/fly_mode_state"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:alpha="0.5"
+            android:background="@drawable/icon_state_default"
+            app:layout_constraintEnd_toStartOf="@+id/screen_shoot"
+            app:layout_constraintTop_toBottomOf="@id/bluetooth_state" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/fly_mode_state_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/fly_mode_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="@+id/fly_mode_state"
+            app:layout_constraintEnd_toEndOf="@+id/fly_mode_state"
+            app:layout_constraintStart_toStartOf="@+id/fly_mode_state"
+            app:layout_constraintTop_toTopOf="@+id/fly_mode_state" />
+
+        <TextView
+            android:id="@+id/screen_shoot"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:alpha="0.5"
+            android:background="@drawable/icon_state_default"
+            app:layout_constraintBottom_toBottomOf="@+id/fly_mode_state"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/screen_shoot_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/screen_shot_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="@+id/screen_shoot"
+            app:layout_constraintEnd_toEndOf="@+id/screen_shoot"
+            app:layout_constraintStart_toStartOf="@+id/screen_shoot"
+            app:layout_constraintTop_toTopOf="@+id/screen_shoot" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="300dp"
+        android:layout_gravity="bottom"
+        android:layout_marginTop="200dp"
+        android:layout_weight="1"
+        android:padding="15dp">
+
+        <SeekBar
+            android:id="@+id/battery_view"
+            android:layout_width="90dp"
+            android:layout_height="30dp"
+            android:layout_marginBottom="20dp"
+            android:maxHeight="30dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:progressDrawable="@drawable/battery_background_low"
+            android:thumb="@null"
+            app:layout_constraintBottom_toTopOf="@+id/light_view"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/battery_num"
+            android:layout_width="40dp"
+            android:layout_height="30dp"
+            android:gravity="center"
+            android:text="电量"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/battery_view"
+            app:layout_constraintEnd_toEndOf="@+id/battery_view"
+            app:layout_constraintStart_toStartOf="@+id/battery_view"
+            app:layout_constraintTop_toTopOf="@+id/battery_view" />
+
+        <TextView
+            android:visibility="gone"
+            android:id="@+id/charging_icon"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:gravity="center"
+            android:background="@drawable/charging"
+            android:layout_marginStart="20dp"
+            app:layout_constraintBottom_toBottomOf="@+id/battery_view"
+            app:layout_constraintEnd_toEndOf="@+id/battery_view"
+            app:layout_constraintStart_toStartOf="@+id/battery_num"
+            app:layout_constraintTop_toTopOf="@+id/battery_view" />
+
+        <TextView
+            android:id="@+id/auto_brightness"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="20dp"
+            android:background="@drawable/auto_brightness_close"
+            android:clickable="true"
+            android:gravity="center"
+            android:text="A"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/battery_view"
+            app:layout_constraintStart_toEndOf="@+id/battery_view" />
+
+        <com.ikotliner.batterydisplay.view.VerticalSeekBar
+            android:id="@+id/light_view"
+            android:layout_width="60dp"
+            android:layout_height="170dp"
+            android:layout_margin="0dp"
+            android:max="255"
+            android:maxHeight="60dp"
+            android:minHeight="60dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:progressDrawable="@drawable/brightness_background"
+            android:saveEnabled="false"
+            android:thumb="@null"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.ikotliner.batterydisplay.view.VerticalSeekBar
+            android:id="@+id/volume_view"
+            android:layout_width="60dp"
+            android:layout_height="170dp"
+            android:layout_marginStart="20dp"
+            android:max="150"
+            android:maxHeight="60dp"
+            android:minHeight="60dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:progressDrawable="@drawable/column_background"
+            android:thumb="@null"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/light_view"
+            app:layout_constraintTop_toTopOf="@+id/light_view" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</LinearLayout>
