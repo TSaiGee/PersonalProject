@@ -17,134 +17,79 @@
         android:paddingEnd="15dp"
         android:paddingBottom="15dp">
 
-        <TextView
-            android:id="@+id/wifi_state"
+        <com.ikotliner.batterydisplay.view.CustomSwitch
+            android:id="@+id/wifi_switch"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="160dp"
-            android:alpha="0.5"
-            android:background="@drawable/icon_state_default"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"
+            app:custom_background="@drawable/icon_selector"
+            app:custom_icon="@drawable/wifi_icon_selector"
+            app:icon_height="26dp"
+            app:icon_width="30dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/internet_state" />
+            app:layout_constraintEnd_toStartOf="@+id/connect_swtich" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/wifi_state_icon"
-            android:layout_width="30dp"
-            android:layout_height="26dp"
-            android:background="@drawable/wifi_default"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="@+id/wifi_state"
-            app:layout_constraintEnd_toEndOf="@+id/wifi_state"
-            app:layout_constraintStart_toStartOf="@+id/wifi_state"
-            app:layout_constraintTop_toTopOf="@+id/wifi_state" />
-
-
-        <TextView
-            android:id="@+id/internet_state"
+        <com.ikotliner.batterydisplay.view.CustomSwitch
+            android:id="@+id/connect_swtich"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:alpha="0.5"
-            android:background="@drawable/icon_state_default"
-            app:layout_constraintBottom_toBottomOf="@+id/wifi_state"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/internet_state_icon"
-            android:layout_width="30dp"
-            android:layout_height="26dp"
-            android:background="@drawable/internet_default"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="@+id/internet_state"
-            app:layout_constraintEnd_toEndOf="@+id/internet_state"
-            app:layout_constraintStart_toStartOf="@+id/internet_state"
-            app:layout_constraintTop_toTopOf="@+id/internet_state" />
+            app:custom_background="@drawable/icon_selector"
+            app:custom_icon="@drawable/internet_selector"
+            app:icon_height="26dp"
+            app:icon_width="30dp"
+            app:layout_constraintBottom_toBottomOf="@+id/wifi_switch"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-
-        <TextView
-            android:id="@+id/bluetooth_state"
+        <com.ikotliner.batterydisplay.view.CustomSwitch
+            android:id="@+id/bluetooth_switch"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:layout_marginEnd="20dp"
-            android:alpha="0.5"
-            android:background="@drawable/icon_state_default"
-            app:layout_constraintEnd_toStartOf="@+id/mute_state"
-            app:layout_constraintTop_toBottomOf="@id/wifi_state" />
+            app:custom_background="@drawable/icon_selector"
+            app:custom_icon="@drawable/bluetooth_selector"
+            app:icon_height="30dp"
+            app:icon_width="30dp"
+            app:layout_constraintEnd_toStartOf="@+id/mute_switch"
+            app:layout_constraintTop_toBottomOf="@id/wifi_switch" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/bluetooth_state_icon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:background="@drawable/bluetooth_default"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="@+id/bluetooth_state"
-            app:layout_constraintEnd_toEndOf="@+id/bluetooth_state"
-            app:layout_constraintStart_toStartOf="@+id/bluetooth_state"
-            app:layout_constraintTop_toTopOf="@+id/bluetooth_state" />
 
-        <TextView
-            android:id="@+id/mute_state"
+        <com.ikotliner.batterydisplay.view.CustomSwitch
+            android:id="@+id/mute_switch"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:alpha="0.5"
-            android:background="@drawable/icon_state_default"
-            app:layout_constraintBottom_toBottomOf="@+id/bluetooth_state"
+            app:custom_background="@drawable/icon_selector"
+            app:custom_icon="@drawable/muse_selector"
+            app:icon_height="32dp"
+            app:icon_width="26dp"
+            app:layout_constraintBottom_toBottomOf="@+id/bluetooth_switch"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/mute_state_icon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:background="@drawable/mute_default"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="@+id/mute_state"
-            app:layout_constraintEnd_toEndOf="@+id/mute_state"
-            app:layout_constraintStart_toStartOf="@+id/mute_state"
-            app:layout_constraintTop_toTopOf="@+id/mute_state" />
 
-        <TextView
-            android:id="@+id/fly_mode_state"
+        <com.ikotliner.batterydisplay.view.CustomSwitch
+            android:id="@+id/fly_mode_switch"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:layout_marginEnd="20dp"
-            android:alpha="0.5"
-            android:background="@drawable/icon_state_default"
+            app:custom_background="@drawable/icon_selector"
+            app:custom_icon="@drawable/flymode_selector"
+            app:icon_height="30dp"
+            app:icon_width="30dp"
             app:layout_constraintEnd_toStartOf="@+id/screen_shoot"
-            app:layout_constraintTop_toBottomOf="@id/bluetooth_state" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/fly_mode_state_icon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:background="@drawable/fly_mode_default"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="@+id/fly_mode_state"
-            app:layout_constraintEnd_toEndOf="@+id/fly_mode_state"
-            app:layout_constraintStart_toStartOf="@+id/fly_mode_state"
-            app:layout_constraintTop_toTopOf="@+id/fly_mode_state" />
+            app:layout_constraintTop_toBottomOf="@id/bluetooth_switch" />
 
         <TextView
             android:id="@+id/screen_shoot"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:alpha="0.5"
             android:background="@drawable/icon_state_default"
-            app:layout_constraintBottom_toBottomOf="@+id/fly_mode_state"
+            app:layout_constraintBottom_toBottomOf="@+id/fly_mode_switch"
             app:layout_constraintEnd_toEndOf="parent" />
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -197,13 +142,13 @@
             app:layout_constraintTop_toTopOf="@+id/battery_view" />
 
         <TextView
-            android:visibility="gone"
             android:id="@+id/charging_icon"
             android:layout_width="15dp"
             android:layout_height="15dp"
-            android:gravity="center"
-            android:background="@drawable/charging"
             android:layout_marginStart="20dp"
+            android:background="@drawable/charging"
+            android:gravity="center"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/battery_view"
             app:layout_constraintEnd_toEndOf="@+id/battery_view"
             app:layout_constraintStart_toStartOf="@+id/battery_num"

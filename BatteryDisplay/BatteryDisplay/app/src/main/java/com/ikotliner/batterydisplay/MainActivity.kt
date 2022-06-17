@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.IntentFilter
 import android.database.ContentObserver
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -20,6 +19,13 @@ import com.ikotliner.batterydisplay.broadcastReceiver.ConfigurationChanged
 import com.ikotliner.batterydisplay.broadcastReceiver.CustomReceiver
 import com.ikotliner.batterydisplay.databinding.ActivityMainBinding
 import com.ikotliner.batterydisplay.util.Common
+import com.ikotliner.batterydisplay.util.Common.setBluetoothStatus
+import com.ikotliner.batterydisplay.util.Common.setConnectStatus
+import com.ikotliner.batterydisplay.util.Common.setFlyMode
+import com.ikotliner.batterydisplay.util.Common.setMuseStatus
+import com.ikotliner.batterydisplay.util.Common.setWifiStatus
+import com.ikotliner.batterydisplay.util.Common.shotScreen
+import com.ikotliner.batterydisplay.view.CustomSwitch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -70,6 +76,14 @@ class MainActivity : AppCompatActivity() {
             activityMainBinding.chargingIcon.visibility = if (state) View.VISIBLE else View.GONE
         }
     })
+
+
+    /**
+     * 自动亮度按钮监听
+     */
+    private val mAutoBrightnessListener =
+        View.OnClickListener { closeAutoBrightness(Common.isAutoBrightness(mContext)) }
+
 
     /**
      * 音量seekBar监听
@@ -128,6 +142,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    /**
+     * 各按钮状态回调修改
+     */
+    private val wifiListener = CustomSwitch.ClickListener { status -> setWifiStatus(status) }
+    private val connectListener = CustomSwitch.ClickListener { status -> setConnectStatus(status) }
+    private val bluetoothListener =
+        CustomSwitch.ClickListener { status -> setBluetoothStatus(status) }
+    private val museListener = CustomSwitch.ClickListener { status -> setMuseStatus(status) }
+    private val flyModeListener = CustomSwitch.ClickListener { status -> setFlyMode(status) }
+    private val screenShotListener = CustomSwitch.ClickListener { shotScreen() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         init()
@@ -164,63 +189,28 @@ class MainActivity : AppCompatActivity() {
         window.statusBarColor = getColor(R.color.white)
         window.navigationBarColor = getColor(R.color.white)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        );
 
         Common.init(mContext)
         activityMainBinding.batteryView.isEnabled = false
-        activityMainBinding.autoBrightness.setOnClickListener {
-            closeAutoBrightness(
-                Common.isAutoBrightness(
-                    mContext
-                )
-            )
-        }
+        activityMainBinding.autoBrightness.setOnClickListener(mAutoBrightnessListener)
         activityMainBinding.volumeView.setOnSeekBarChangeListener(mVolumeListener)
         activityMainBinding.lightView.setOnSeekBarChangeListener(mBrightnessListener)
         Common.registerSystemBrightness(mContext, mBrightnessObserver)
         Common.registerSystemBrightnessMode(mContext, mBrightnessModeObserver)
-        activityMainBinding.wifiState.setOnClickListener {
-            //updateWifiButton(Common.requestWifiStatus())
-            updateWifiButton(isWifiOpen)
-            isWifiOpen = !isWifiOpen
-        }
-        activityMainBinding.wifiStateIcon.setOnClickListener {
-            //updateWifiButton(Common.requestWifiStatus())
-            updateWifiButton(isWifiOpen)
-            isWifiOpen = !isWifiOpen
-        }
-        activityMainBinding.internetState.setOnClickListener {
-            updateInternetButton(isInternetOpen)
-            isInternetOpen = !isInternetOpen
-        }
-        activityMainBinding.internetStateIcon.setOnClickListener {
-            updateInternetButton(isInternetOpen)
-            isInternetOpen = !isInternetOpen
-        }
-        activityMainBinding.bluetoothState.setOnClickListener {
-            updateBluetoothButton(isBluetoothOpen)
-            isBluetoothOpen = !isBluetoothOpen
-        }
-        activityMainBinding.bluetoothStateIcon.setOnClickListener {
-            updateBluetoothButton(isBluetoothOpen)
-            isBluetoothOpen = !isBluetoothOpen
-        }
-        activityMainBinding.muteState.setOnClickListener {
-            updateMuteButton(isMuteOpen)
-            isMuteOpen = !isMuteOpen
-        }
-        activityMainBinding.muteStateIcon.setOnClickListener {
-            updateMuteButton(isMuteOpen)
-            isMuteOpen = !isMuteOpen
-        }
-        activityMainBinding.flyModeState.setOnClickListener {
-            updateFlyModeButton(isFlyModeOpen)
-            isFlyModeOpen = !isFlyModeOpen
-        }
-        activityMainBinding.flyModeStateIcon.setOnClickListener {
-            updateFlyModeButton(isFlyModeOpen)
-            isFlyModeOpen = !isFlyModeOpen
-        }
+
+        /**
+         * 使用自定义组合view后的WiFi按钮
+         */
+        activityMainBinding.wifiSwitch.addClickListener(wifiListener)
+        activityMainBinding.connectSwtich.addClickListener(connectListener)
+        activityMainBinding.bluetoothSwitch.addClickListener(bluetoothListener)
+        activityMainBinding.muteSwitch.addClickListener(museListener)
+        activityMainBinding.flyModeSwitch.addClickListener(flyModeListener)
+
         activityMainBinding.screenShoot.setOnClickListener {
             updateScreenShotButton()
         }
@@ -230,12 +220,6 @@ class MainActivity : AppCompatActivity() {
         initViewStatus()
     }
 
-    private var isWifiOpen = false
-    private var isInternetOpen = false
-    private var isBluetoothOpen = false
-    private var isMuteOpen = false
-    private var isFlyModeOpen = false
-    private var isScreenShotOpen = false
 
     private fun closeAutoBrightness(state: Boolean) {
         activityMainBinding.autoBrightness.setTextColor(if (state) Color.WHITE else Color.GRAY)
@@ -257,74 +241,16 @@ class MainActivity : AppCompatActivity() {
         activityMainBinding.volumeView.progress = Common.requestCurrentVolume() * 10
         activityMainBinding.lightView.progress = Common.requestCurrentBrightness(mContext)
 
-        activityMainBinding.wifiState.alpha = if (Common.requestWifiStatus()) 1F else 0.5F
-        activityMainBinding.wifiStateIcon.background =
-            if (Common.requestWifiStatus()) getDrawable(R.drawable.wifi_open) else getDrawable(R.drawable.wifi_default)
+        activityMainBinding.wifiSwitch.updateStatus(Common.requestWifiStatus(), Common.WIFI)
+        activityMainBinding.connectSwtich.updateStatus(Common.requestConnectStatus(), Common.CONNECT)
+        activityMainBinding.bluetoothSwitch.updateStatus(Common.requestBluetoothStatus(), Common.BT)
+        activityMainBinding.muteSwitch.updateStatus(Common.requestMuseStatus(), Common.MUSE)
+        activityMainBinding.flyModeSwitch.updateStatus(Common.requestFlyModeStatus(), Common.FLY_MODE)
     }
 
-    private fun updateWifiButton(state: Boolean) {
-        if (state) {
-            ObjectAnimator.ofFloat(activityMainBinding.wifiState, "alpha", 1F, 0.5F)
-                .setDuration(100L).start()
-        } else {
-            ObjectAnimator.ofFloat(activityMainBinding.wifiState, "alpha", 0.5F, 1F)
-                .setDuration(100L).start()
-        }
-        activityMainBinding.wifiStateIcon.background =
-            if (!state) getDrawable(R.drawable.wifi_open) else getDrawable(R.drawable.wifi_default)
-        Common.setWifiStatus(!state)
-    }
-
-    private fun updateInternetButton(state: Boolean) {
-        if (state) {
-            ObjectAnimator.ofFloat(activityMainBinding.internetState, "alpha", 1F, 0.5F)
-                .setDuration(100L).start()
-        } else {
-            ObjectAnimator.ofFloat(activityMainBinding.internetState, "alpha", 0.5F, 1F)
-                .setDuration(100L).start()
-        }
-        activityMainBinding.internetStateIcon.background =
-            if (!state) getDrawable(R.drawable.internet_open) else getDrawable(R.drawable.internet_default)
-    }
-
-    private fun updateBluetoothButton(state: Boolean) {
-        if (state) {
-            ObjectAnimator.ofFloat(activityMainBinding.bluetoothState, "alpha", 1F, 0.5F)
-                .setDuration(100L).start()
-        } else {
-            ObjectAnimator.ofFloat(activityMainBinding.bluetoothState, "alpha", 0.5F, 1F)
-                .setDuration(100L).start()
-        }
-        activityMainBinding.bluetoothStateIcon.background =
-            if (!state) getDrawable(R.drawable.bluetooth_open) else getDrawable(R.drawable.bluetooth_default)
-    }
-
-    private fun updateMuteButton(state: Boolean) {
-        if (state) {
-            ObjectAnimator.ofFloat(activityMainBinding.muteState, "alpha", 1F, 0.5F)
-                .setDuration(100L).start()
-        } else {
-            ObjectAnimator.ofFloat(activityMainBinding.muteState, "alpha", 0.5F, 1F)
-                .setDuration(100L).start()
-        }
-        activityMainBinding.muteStateIcon.background =
-            if (!state) getDrawable(R.drawable.mute_open) else getDrawable(R.drawable.mute_default)
-    }
-
-    private fun updateFlyModeButton(state: Boolean) {
-        if (state) {
-            ObjectAnimator.ofFloat(activityMainBinding.flyModeState, "alpha", 1F, 0.5F)
-                .setDuration(100L).start()
-        } else {
-            ObjectAnimator.ofFloat(activityMainBinding.flyModeState, "alpha", 0.5F, 1F)
-                .setDuration(100L).start()
-        }
-        activityMainBinding.flyModeStateIcon.background =
-            if (!state) getDrawable(R.drawable.fly_mode_open) else getDrawable(R.drawable.fly_mode_default)
-    }
 
     private fun updateScreenShotButton() {
-        ObjectAnimator.ofFloat(activityMainBinding.screenShoot, "alpha", 0.5F, 1F, 0.5F)
+        ObjectAnimator.ofFloat(activityMainBinding.screenShoot, "alpha", 1F, 0.5F, 1F)
             .setDuration(100L).start()
     }
 }

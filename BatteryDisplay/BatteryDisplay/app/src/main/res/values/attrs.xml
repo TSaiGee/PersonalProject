@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="VerticalSeekBar">
-        <attr name="angle" format="float"/>
+    <declare-styleable name="CustomSwitch">
+        <attr name="icon_height" format="dimension"/>
+        <attr name="icon_width" format="dimension"/>
+        <attr name="custom_icon" format="reference"/>
+        <attr name="custom_background" format="reference"/>
     </declare-styleable>
 </resources>
