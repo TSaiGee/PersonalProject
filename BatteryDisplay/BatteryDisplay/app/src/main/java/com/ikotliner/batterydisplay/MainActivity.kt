@@ -2,10 +2,13 @@ package com.ikotliner.batterydisplay
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.IntentFilter
 import android.database.ContentObserver
 import android.graphics.Color
+import android.net.wifi.WifiManager
+import android.os.BatteryManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,6 +18,7 @@ import android.view.WindowManager
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
 import com.ikotliner.batterydisplay.broadcastReceiver.ConfigurationChanged
 import com.ikotliner.batterydisplay.broadcastReceiver.CustomReceiver
 import com.ikotliner.batterydisplay.databinding.ActivityMainBinding
@@ -35,47 +39,63 @@ import kotlinx.coroutines.cancel
 class MainActivity : AppCompatActivity() {
 
     private lateinit var activityMainBinding: ActivityMainBinding
-    private var mCurrentVolume: Int = 0
-    private var mScreenBrightness: Int = 0
     private val job = Job()
     private val scope = CoroutineScope(job)
     private lateinit var mContext: Context
 
-    private val appReceiver = CustomReceiver(object : ConfigurationChanged {
-        override fun onChanged(type: Int, value: Int) {
-            when (type) {
-                Common.BATTERY_CHANGE -> {
-                    when (value) {
-                        in 0..10 -> {
-                            activityMainBinding.batteryView.progressDrawable =
-                                getDrawable(R.drawable.battery_background_low)
-                            activityMainBinding.batteryNum.setTextColor(Color.WHITE)
-                        }
-                        in 11..60 -> {
-                            activityMainBinding.batteryView.progressDrawable =
-                                getDrawable(R.drawable.battery_background_middle)
-                            activityMainBinding.batteryNum.setTextColor(Color.WHITE)
-                        }
-                        else -> {
-                            activityMainBinding.batteryView.progressDrawable =
-                                getDrawable(R.drawable.battery_background_high)
-                            activityMainBinding.batteryNum.setTextColor(Color.GRAY)
-                        }
-                    }
-                    activityMainBinding.batteryView.progress = value
-                    activityMainBinding.batteryNum.text = value.toString()
+    private val mStateListener = object : Common.StateListener {
+        override fun updateBatteryNum(value: Int) {
+            when (value) {
+                in 0..10 -> {
+                    activityMainBinding.batteryView.progressDrawable =
+                        getDrawable(R.drawable.battery_background_low)
+                    activityMainBinding.batteryNum.setTextColor(Color.WHITE)
                 }
-                Common.VOLUME_CHANGE -> {
-                    activityMainBinding.volumeView.progress = Common.requestCurrentVolume() * 10
+                in 11..60 -> {
+                    activityMainBinding.batteryView.progressDrawable =
+                        getDrawable(R.drawable.battery_background_middle)
+                    activityMainBinding.batteryNum.setTextColor(Color.WHITE)
+                }
+                else -> {
+                    activityMainBinding.batteryView.progressDrawable =
+                        getDrawable(R.drawable.battery_background_high)
+                    activityMainBinding.batteryNum.setTextColor(Color.GRAY)
                 }
             }
-
+            activityMainBinding.batteryView.progress = value
+            activityMainBinding.batteryNum.text = value.toString()
         }
 
-        override fun onBatteryCharging(state: Boolean) {
-            activityMainBinding.chargingIcon.visibility = if (state) View.VISIBLE else View.GONE
+        override fun updateBatteryState(state: Boolean) {
+            activityMainBinding.chargingIcon.visibility =
+                if (state) View.VISIBLE else View.GONE
         }
-    })
+
+        override fun updateVolumeNum(value: Int) {
+            activityMainBinding.volumeView.progress = Common.requestCurrentVolume() * 10
+        }
+
+        override fun updateBrightness() {
+            activityMainBinding.lightView.progress = Common.requestCurrentBrightness(mContext)
+        }
+
+        override fun updateBrightnessMode() {
+            val state = Common.isAutoBrightness(mContext)
+
+            activityMainBinding.autoBrightness.setTextColor(if (state) Color.GRAY else Color.WHITE)
+
+            activityMainBinding.autoBrightness.background =
+                if (state) getDrawable(R.drawable.auto_brightness_open) else getDrawable(R.drawable.auto_brightness_close)
+        }
+
+        override fun updateBluetoothState(value: Int) {
+            activityMainBinding.bluetoothSwitch.updateStatus(value == BluetoothAdapter.STATE_ON || value == BluetoothAdapter.STATE_TURNING_ON, Common.BT)
+        }
+
+        override fun updateWifiState(value: Int) {
+            activityMainBinding.wifiSwitch.updateStatus(value == WifiManager.WIFI_STATE_ENABLED,Common.WIFI)
+        }
+    }
 
 
     /**
@@ -90,8 +110,7 @@ class MainActivity : AppCompatActivity() {
      */
     private val mVolumeListener = object : OnSeekBarChangeListener {
         override fun onProgressChanged(p0: SeekBar?, progress: Int, fromUser: Boolean) {
-            mCurrentVolume = progress / 10
-            Common.setMediaVolume(mCurrentVolume)
+            Common.setMediaVolume(progress / 10)
         }
 
         override fun onStartTrackingTouch(p0: SeekBar?) {}
@@ -111,36 +130,6 @@ class MainActivity : AppCompatActivity() {
 
         override fun onStopTrackingTouch(seekBar: SeekBar) {}
     }
-
-    /**
-     * 亮度变化回调函数
-     */
-    private val mBrightnessObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
-        override fun onChange(selfChange: Boolean) {
-            super.onChange(selfChange)
-            try {
-                mScreenBrightness = Common.requestCurrentBrightness(mContext)
-                activityMainBinding.lightView.progress = mScreenBrightness
-            } catch (e: Settings.SettingNotFoundException) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    /**
-     * 自动亮度变化函数
-     */
-    private val mBrightnessModeObserver =
-        object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) {
-                super.onChange(selfChange)
-                try {
-                    initViewStatus()
-                } catch (e: Settings.SettingNotFoundException) {
-                    e.printStackTrace()
-                }
-            }
-        }
 
     /**
      * 各按钮状态回调修改
@@ -165,15 +154,13 @@ class MainActivity : AppCompatActivity() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(Common.INTENT_BATTERY_CHANGE)
         intentFilter.addAction(Common.INTENT_VOLUME_CHANGE)
-        mContext.registerReceiver(appReceiver, intentFilter)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
         job.cancel()
-        mContext.unregisterReceiver(appReceiver)
-        contentResolver.unregisterContentObserver(mBrightnessObserver)
+        Common.destroy(mContext)
     }
 
     /**
@@ -188,19 +175,17 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.hide()
         window.statusBarColor = getColor(R.color.white)
         window.navigationBarColor = getColor(R.color.white)
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
-        );
+        //window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+        val controller = ViewCompat.getWindowInsetsController(activityMainBinding.root)
+        controller?.isAppearanceLightStatusBars = true
+        controller?.isAppearanceLightNavigationBars = true
 
-        Common.init(mContext)
+
+        Common.init(mContext, mStateListener)
         activityMainBinding.batteryView.isEnabled = false
         activityMainBinding.autoBrightness.setOnClickListener(mAutoBrightnessListener)
         activityMainBinding.volumeView.setOnSeekBarChangeListener(mVolumeListener)
         activityMainBinding.lightView.setOnSeekBarChangeListener(mBrightnessListener)
-        Common.registerSystemBrightness(mContext, mBrightnessObserver)
-        Common.registerSystemBrightnessMode(mContext, mBrightnessModeObserver)
 
         /**
          * 使用自定义组合view后的WiFi按钮
@@ -231,6 +216,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViewStatus() {
+
         val state = Common.isAutoBrightness(mContext)
 
         activityMainBinding.autoBrightness.setTextColor(if (state) Color.GRAY else Color.WHITE)

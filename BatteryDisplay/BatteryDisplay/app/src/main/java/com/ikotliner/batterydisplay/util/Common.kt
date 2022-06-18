@@ -2,18 +2,27 @@ package com.ikotliner.batterydisplay.util
 
 import android.Manifest
 import android.app.Activity
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.media.AudioManager
 import android.net.Uri
 import android.net.wifi.WifiManager
+import android.os.BatteryManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.core.content.ContextCompat
+import com.ikotliner.batterydisplay.broadcastReceiver.ConfigurationChanged
+import com.ikotliner.batterydisplay.broadcastReceiver.CustomReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,10 +31,17 @@ import kotlinx.coroutines.launch
 object Common {
     const val TAG = "BatteryApp"
     const val BATTERY_CHANGE = 0
-    const val VOLUME_CHANGE = 1
+    const val BATTERY_CHARGING = 1
+    const val VOLUME_CHANGE = 2
+    const val BLUETOOTH_STATE = 4
+    const val WIFI_STATE = 5
     const val INTENT_BATTERY_CHANGE = "android.intent.action.BATTERY_CHANGED"
     const val INTENT_VOLUME_CHANGE = "android.media.VOLUME_CHANGED_ACTION"
     const val MEDIA_VOLUME_CHANGE = "android.media.EXTRA_VOLUME_STREAM_TYPE"
+    const val INTENT_BLUETOOTH_CHANGE = BluetoothAdapter.ACTION_STATE_CHANGED
+    const val INTENT_BLUETOOTH_CONNECTED = BluetoothDevice.ACTION_ACL_CONNECTED
+    const val INTENT_BLUETOOTH_DISCONNECTED = BluetoothDevice.ACTION_ACL_DISCONNECTED
+    const val INTENT_WIFI_STATE_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION
     private lateinit var mAudioManager: AudioManager
     private lateinit var mWifiManager: WifiManager
     const val WIFI = "wifi"
@@ -33,11 +49,67 @@ object Common {
     const val BT = "bluetooth"
     const val MUSE = "mute"
     const val FLY_MODE = "flyMode"
+    private lateinit var mStateListener: StateListener
+    private lateinit var mBluetoothAdapter: BluetoothAdapter
 
-    fun init(context: Context) {
+    private val appReceiver = CustomReceiver(object : ConfigurationChanged {
+        override fun onChanged(type: Int, value: Int) {
+            when (type) {
+                BATTERY_CHANGE -> mStateListener.updateBatteryNum(value)
+                VOLUME_CHANGE -> mStateListener.updateVolumeNum(value)
+                BATTERY_CHARGING -> mStateListener.updateBatteryState(value == BatteryManager.BATTERY_STATUS_CHARGING)
+                BLUETOOTH_STATE-> mStateListener.updateBluetoothState(value)
+                WIFI_STATE-> mStateListener.updateWifiState(value)
+            }
+
+        }
+    })
+
+    /**
+     * 亮度变化回调函数
+     */
+    private val mBrightnessObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) {
+            super.onChange(selfChange)
+            try {
+                mStateListener.updateBrightness()
+            } catch (e: Settings.SettingNotFoundException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * 自动亮度变化函数
+     */
+    private val mBrightnessModeObserver =
+        object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                super.onChange(selfChange)
+                try {
+                    mStateListener.updateBrightnessMode()
+                } catch (e: Settings.SettingNotFoundException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+    fun init(context: Context, stateListener: StateListener) {
         mAudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         mWifiManager =
             context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        mStateListener = stateListener
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(INTENT_BATTERY_CHANGE)
+        intentFilter.addAction(INTENT_VOLUME_CHANGE)
+        intentFilter.addAction(INTENT_BLUETOOTH_CHANGE)
+        intentFilter.addAction(INTENT_BLUETOOTH_CONNECTED)
+        intentFilter.addAction(INTENT_BLUETOOTH_DISCONNECTED)
+        intentFilter.addAction(INTENT_WIFI_STATE_CHANGE)
+        context.registerReceiver(appReceiver, intentFilter)
+        registerSystemBrightness(context)
+        registerSystemBrightnessMode(context)
     }
 
     /**
@@ -60,7 +132,17 @@ object Common {
                 arrayOf(Manifest.permission.READ_PHONE_STATE),
                 0
             )
-            return
+        }
+
+        val checkBtAdminPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADMIN)
+        val checkBtPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH)
+
+        if (checkBtAdminPermission!=PackageManager.PERMISSION_GRANTED || checkBtPermission != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(
+                context as Activity,
+                arrayOf(Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH),
+                0
+            )
         }
     }
 
@@ -81,7 +163,7 @@ object Common {
     /**
      * 注册系统亮度监听
      */
-    fun registerSystemBrightness(context: Context, mBrightnessObserver: ContentObserver) {
+    private fun registerSystemBrightness(context: Context) {
         context.contentResolver.registerContentObserver(
             Settings.System.getUriFor(Settings.System.SCREEN_BRIGHTNESS),
             true,
@@ -89,7 +171,9 @@ object Common {
         )
     }
 
-    fun registerSystemBrightnessMode(context: Context, mBrightnessModeObserver: ContentObserver) {
+    private fun registerSystemBrightnessMode(
+        context: Context
+    ) {
         context.contentResolver.registerContentObserver(
             Settings.System.getUriFor(Settings.System.SCREEN_BRIGHTNESS_MODE),
             true,
@@ -113,7 +197,10 @@ object Common {
      * 获取系统亮度
      */
     fun requestCurrentBrightness(context: Context): Int {
-        return Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS)
+        return Settings.System.getInt(
+            context.contentResolver,
+            Settings.System.SCREEN_BRIGHTNESS
+        )
     }
 
     fun isAutoBrightness(context: Context): Boolean {
@@ -144,6 +231,7 @@ object Common {
     }
 
     fun setWifiStatus(state: Boolean) {
+        mWifiManager.isWifiEnabled = state
         Log.e(TAG, "setWifiStatus: $state")
     }
 
@@ -162,11 +250,15 @@ object Common {
      * 获取Bluetooth状态
      */
     fun requestBluetoothStatus(): Boolean {
+        if (mBluetoothAdapter.isEnabled){
+            return mBluetoothAdapter.state == BluetoothAdapter.STATE_ON
+        }
         return false
     }
 
     fun setBluetoothStatus(state: Boolean) {
         Log.e(TAG, "setBluetoothStatus: $state")
+        if (state) mBluetoothAdapter.enable() else mBluetoothAdapter.disable()
     }
 
     /**
@@ -198,5 +290,18 @@ object Common {
         Log.e(TAG, "shotScreen: ")
     }
 
+    fun destroy(mContext: Context) {
 
+    }
+
+
+    interface StateListener {
+        fun updateBatteryNum(value: Int)
+        fun updateBatteryState(state: Boolean)
+        fun updateVolumeNum(value: Int)
+        fun updateBrightness()
+        fun updateBrightnessMode()
+        fun updateBluetoothState(value: Int)
+        fun updateWifiState(value: Int)
+    }
 }
