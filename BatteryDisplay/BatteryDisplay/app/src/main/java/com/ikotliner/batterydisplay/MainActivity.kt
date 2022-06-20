@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.IntentFilter
 import android.database.ContentObserver
 import android.graphics.Color
+import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Bundle
@@ -23,6 +24,7 @@ import com.ikotliner.batterydisplay.broadcastReceiver.ConfigurationChanged
 import com.ikotliner.batterydisplay.broadcastReceiver.CustomReceiver
 import com.ikotliner.batterydisplay.databinding.ActivityMainBinding
 import com.ikotliner.batterydisplay.util.Common
+import com.ikotliner.batterydisplay.util.Common.requestMuseStatus
 import com.ikotliner.batterydisplay.util.Common.setBluetoothStatus
 import com.ikotliner.batterydisplay.util.Common.setConnectStatus
 import com.ikotliner.batterydisplay.util.Common.setFlyMode
@@ -73,6 +75,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun updateVolumeNum(value: Int) {
             activityMainBinding.volumeView.progress = Common.requestCurrentVolume() * 10
+            activityMainBinding.muteSwitch.isSelected = requestMuseStatus()
         }
 
         override fun updateBrightness() {
@@ -89,11 +92,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun updateBluetoothState(value: Int) {
-            activityMainBinding.bluetoothSwitch.updateStatus(value == BluetoothAdapter.STATE_ON || value == BluetoothAdapter.STATE_TURNING_ON, Common.BT)
+            if (value == BluetoothAdapter.STATE_ON) {
+                activityMainBinding.bluetoothSwitch.updateStatus(true, Common.BT)
+            }
+            if (value == BluetoothAdapter.STATE_OFF) {
+                activityMainBinding.bluetoothSwitch.updateStatus(false, Common.BT)
+            }
         }
 
         override fun updateWifiState(value: Int) {
             activityMainBinding.wifiSwitch.updateStatus(value == WifiManager.WIFI_STATE_ENABLED,Common.WIFI)
+        }
+
+        override fun updateMuseState(value: Int) {
+            activityMainBinding.muteSwitch.isSelected = value == AudioManager.RINGER_MODE_SILENT
         }
     }
 
@@ -145,15 +157,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         init()
+        initViewStatus()
         Common.requestPermission(mContext)
     }
 
     override fun onResume() {
         super.onResume()
-        initViewStatus()
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(Common.INTENT_BATTERY_CHANGE)
-        intentFilter.addAction(Common.INTENT_VOLUME_CHANGE)
     }
 
     override fun onDestroy() {
@@ -174,7 +183,6 @@ class MainActivity : AppCompatActivity() {
         //隐藏导航栏
         supportActionBar?.hide()
         window.statusBarColor = getColor(R.color.white)
-        window.navigationBarColor = getColor(R.color.white)
         //window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         val controller = ViewCompat.getWindowInsetsController(activityMainBinding.root)
         controller?.isAppearanceLightStatusBars = true

@@ -2,6 +2,7 @@ package com.ikotliner.batterydisplay.util
 
 import android.Manifest
 import android.app.Activity
+import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Context
@@ -35,6 +36,7 @@ object Common {
     const val VOLUME_CHANGE = 2
     const val BLUETOOTH_STATE = 4
     const val WIFI_STATE = 5
+    const val MUSE_STATE = 6
     const val INTENT_BATTERY_CHANGE = "android.intent.action.BATTERY_CHANGED"
     const val INTENT_VOLUME_CHANGE = "android.media.VOLUME_CHANGED_ACTION"
     const val MEDIA_VOLUME_CHANGE = "android.media.EXTRA_VOLUME_STREAM_TYPE"
@@ -42,6 +44,7 @@ object Common {
     const val INTENT_BLUETOOTH_CONNECTED = BluetoothDevice.ACTION_ACL_CONNECTED
     const val INTENT_BLUETOOTH_DISCONNECTED = BluetoothDevice.ACTION_ACL_DISCONNECTED
     const val INTENT_WIFI_STATE_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION
+    const val INTENT_RINGER_MODE_CHANGE = AudioManager.RINGER_MODE_CHANGED_ACTION
     private lateinit var mAudioManager: AudioManager
     private lateinit var mWifiManager: WifiManager
     const val WIFI = "wifi"
@@ -51,6 +54,7 @@ object Common {
     const val FLY_MODE = "flyMode"
     private lateinit var mStateListener: StateListener
     private lateinit var mBluetoothAdapter: BluetoothAdapter
+    private lateinit var mNotificationManager: NotificationManager
 
     private val appReceiver = CustomReceiver(object : ConfigurationChanged {
         override fun onChanged(type: Int, value: Int) {
@@ -60,6 +64,7 @@ object Common {
                 BATTERY_CHARGING -> mStateListener.updateBatteryState(value == BatteryManager.BATTERY_STATUS_CHARGING)
                 BLUETOOTH_STATE-> mStateListener.updateBluetoothState(value)
                 WIFI_STATE-> mStateListener.updateWifiState(value)
+                MUSE_STATE-> mStateListener.updateMuseState(value)
             }
 
         }
@@ -99,6 +104,7 @@ object Common {
         mWifiManager =
             context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        mNotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mStateListener = stateListener
         val intentFilter = IntentFilter()
         intentFilter.addAction(INTENT_BATTERY_CHANGE)
@@ -107,6 +113,7 @@ object Common {
         intentFilter.addAction(INTENT_BLUETOOTH_CONNECTED)
         intentFilter.addAction(INTENT_BLUETOOTH_DISCONNECTED)
         intentFilter.addAction(INTENT_WIFI_STATE_CHANGE)
+        intentFilter.addAction(INTENT_RINGER_MODE_CHANGE)
         context.registerReceiver(appReceiver, intentFilter)
         registerSystemBrightness(context)
         registerSystemBrightnessMode(context)
@@ -143,6 +150,10 @@ object Common {
                 arrayOf(Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH),
                 0
             )
+        }
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N && !mNotificationManager.isNotificationPolicyAccessGranted) {
+            context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
         }
     }
 
@@ -265,10 +276,11 @@ object Common {
      * 获取Muse状态
      */
     fun requestMuseStatus(): Boolean {
-        return false
+        return mAudioManager.ringerMode == AudioManager.RINGER_MODE_SILENT
     }
 
     fun setMuseStatus(state: Boolean) {
+        mAudioManager.ringerMode = if (state) AudioManager.RINGER_MODE_SILENT else AudioManager.RINGER_MODE_NORMAL
         Log.e(TAG, "setMuseStatus: $state")
     }
 
@@ -303,5 +315,6 @@ object Common {
         fun updateBrightnessMode()
         fun updateBluetoothState(value: Int)
         fun updateWifiState(value: Int)
+        fun updateMuseState(value: Int)
     }
 }
